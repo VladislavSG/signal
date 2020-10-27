@@ -78,7 +78,7 @@ struct signal<void (Args...)>
   using connections_t = intrusive::list<connection, struct connection_tag>;
 
   struct iteration_token {
-    explicit iteration_token(signal* const sig) noexcept
+    explicit iteration_token(signal const* sig) noexcept
         : sig(sig), next(sig->top_token)
     {
       sig->top_token = this;
@@ -118,8 +118,8 @@ struct signal<void (Args...)>
     return signals::signal<void(Args...)>::connection(this, std::move(slot));
   };
 
-  void operator()(Args...args) { // TODO const
-    iteration_token tok{this};
+  void operator()(Args...args) const {
+    iteration_token tok(this);
     tok.it = connections.begin();
     while (tok.it != connections.end()) {
       auto copy = tok.it;
