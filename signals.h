@@ -15,11 +15,11 @@ struct signal<void (Args...)>
 
   struct connection : intrusive::list_element<struct connection_tag> {
     connection() noexcept
-        : sig(nullptr), slot([](){}){};
+        : sig(nullptr), slot({}) {};
     connection(signal* sig, slot_t slot) noexcept
         : sig(sig)
         , slot(std::move(slot)) {
-      sig->connections.push_front(*this);
+      sig->connections.push_back(*this);
     }
 
     connection(connection const&) = delete;
@@ -50,6 +50,7 @@ struct signal<void (Args...)>
       }
       unlink();
       sig = nullptr;
+      slot = {};
     };
 
     ~connection() {
@@ -93,7 +94,7 @@ struct signal<void (Args...)>
 
   private:
     signal const* sig;
-    mutable typename connections_t::const_iterator it;
+    typename connections_t::const_iterator it;
 
     iteration_token* next;
 
@@ -109,8 +110,9 @@ struct signal<void (Args...)>
     for (iteration_token* tok = top_token; tok != nullptr; tok = tok->next) {
       tok->sig = nullptr;
     }
-    for (auto it = connections.begin(); it != connections.end(); ++it) {
-      it->sig = nullptr;
+    for (auto it = ++connections.begin(); it != ++connections.end(); ++it) {
+      auto copy = it;
+      (--copy)->disconnect();
     }
   };
 
