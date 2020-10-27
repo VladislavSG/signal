@@ -48,9 +48,7 @@ struct signal<void (Args...)>
           ++tok->it;
         }
       }
-      unlink();
-      sig = nullptr;
-      slot = {};
+      reset();
     };
 
     ~connection() {
@@ -60,6 +58,12 @@ struct signal<void (Args...)>
     friend struct signal;
 
   private:
+    void reset() {
+      unlink();
+      sig = nullptr;
+      slot = {};
+    }
+
     void move(connection& other) {
       if (sig != nullptr) {
         sig->connections.insert(sig->connections.as_iterator(other), *this);
@@ -112,7 +116,7 @@ struct signal<void (Args...)>
     }
     for (auto it = ++connections.begin(); it != ++connections.end(); ++it) {
       auto copy = it;
-      (--copy)->disconnect();
+      (--copy)->reset();
     }
   };
 
